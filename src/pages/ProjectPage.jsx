@@ -1,13 +1,18 @@
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import TaskList from "../components/TaskList"
-import { projects } from '../data/projects'
+import ProjectModal from '../components/ProjectModal'
+import { projects as initialProjects } from '../data/projects'
 import { tasks } from '../data/tasks'
 import { employees } from '../data/employees'
 
 function ProjectPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
+  
+  // Project state
+  const [projects, setProjects] = useState(initialProjects)
+  const [showModal, setShowModal] = useState(false)
 
   // Seçili projeyi bul
   const project = projects.find(p => p.id === parseInt(projectId))
@@ -39,6 +44,17 @@ function ProjectPage() {
     if (progress >= 40) return 'bg-warning' // moderate progress
     if (progress > 0) return 'bg-warning' // just started
     return 'bg-secondary' // not started
+  }
+
+  // Edit project handler
+  const handleEditProject = () => {
+    setShowModal(true)
+  }
+
+  const handleSaveProject = (updatedProject) => {
+    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p))
+    console.log('Project updated:', updatedProject)
+    // TODO: API call here
   }
 
   // Proje bulunamazsa
@@ -172,13 +188,23 @@ function ProjectPage() {
               <div className="card-body">
                 <h5 className="card-title mb-3">Actions</h5>
                 <div className="d-flex flex-column gap-2">
-                  <button className="btn btn-primary">Edit Project</button>
+                  <button className="btn btn-primary" onClick={handleEditProject}>
+                    Edit Project
+                  </button>
                   <button className="btn btn-outline-secondary">Add Member</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Project Modal */}
+        <ProjectModal
+          show={showModal}
+          onClose={() => setShowModal(false)}
+          onSave={handleSaveProject}
+          project={project}
+        />
       </div>
   )
 }

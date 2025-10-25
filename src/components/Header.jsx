@@ -1,4 +1,5 @@
 import { useEmployee } from '../context/EmployeeContext'
+import logo from '../assets/logo.ico'
 
 function Header({ title, onChangeRole }) {
   const { currentEmployee } = useEmployee()
@@ -8,7 +9,10 @@ function Header({ title, onChangeRole }) {
       <div className="container-fluid">
         <div className="row align-items-center">
           <div className="col">
-            <h4 className="mb-0">PlanLLaMA - {title}</h4>
+            <div className="d-flex align-items-center gap-2">
+              <img src={logo} alt="PlanLLaMA" style={{ width: '64px', height: '64px' }} />
+              <h4 className="mb-0">PlanLLaMA - {title}</h4>
+            </div>
           </div>
           <div className="col-auto d-flex align-items-center gap-3">
             {currentEmployee && (

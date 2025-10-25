@@ -11,12 +11,14 @@ function ProjectCard({ project, role, members = [], onEdit, onDelete, onClick })
     }
   }
 
-  const getProgressBorderColor = () => {
-    if (progress >= 100) return 'var(--success-color)' // completed
-    if (progress >= 70) return 'var(--primary-color)' // good progress
-    if (progress >= 40) return 'var(--warning-color)' // moderate progress
-    if (progress > 0) return '#fd7e14' // just started (orange)
-    return '#6c757d' // not started (gray)
+  const getStatusBorderColor = (status) => {
+    switch(status) {
+      case 'Completed': return 'var(--success-color)'
+      case 'In Progress': return 'var(--primary-color)'
+      case 'Planning': return 'var(--warning-color)'
+      case 'On Hold': return '#6c757d'
+      default: return '#6c757d'
+    }
   }
 
   const getProgressBarClass = () => {
@@ -50,7 +52,7 @@ function ProjectCard({ project, role, members = [], onEdit, onDelete, onClick })
           onClick={handleCardClick}
           style={{ 
             cursor: 'pointer',
-            borderLeft: `8px solid ${getProgressBorderColor()}`
+            borderLeft: `8px solid ${getStatusBorderColor(project.status)}`
           }}
       >
         <div className="d-flex justify-content-between align-items-start mb-2">

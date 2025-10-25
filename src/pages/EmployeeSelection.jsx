@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { employees } from '../data/employees'
 import { useEmployee } from '../context/EmployeeContext'
+import logo from '../assets/logo.ico'
 
 function EmployeeSelection() {
   const navigate = useNavigate()
@@ -75,7 +76,10 @@ function EmployeeSelection() {
       <div className="row min-vh-100 align-items-center justify-content-center">
         <div className="col-md-10 col-lg-8">
           <div className="text-center mb-5">
-            <h1 className="display-4 mb-3">PlanLLaMA</h1>
+            <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+              <img src={logo} alt="PlanLLaMA" style={{ width: '48px', height: '48px' }} />
+              <h1 className="display-4 mb-0">PlanLLaMA</h1>
+            </div>
             <p className="lead text-muted">Select an employee to continue</p>
           </div>
 

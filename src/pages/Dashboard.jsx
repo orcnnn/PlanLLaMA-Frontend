@@ -23,14 +23,18 @@ function Dashboard({ role = 'pm' }) {
     return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
   }, [role])
 
-  // Get color based on overall progress
+  // Get color based on project statuses
   const getProjectStatsColor = useMemo(() => {
-    const progress = overallProjectProgress
-    if (progress >= 70) return 'success' // good progress
-    if (progress >= 40) return 'primary' // moderate progress
-    if (progress > 0) return 'warning' // just started
-    return 'info' // not started
-  }, [overallProjectProgress])
+    const inProgressCount = projects.filter(p => p.status === 'In Progress').length
+    const completedCount = projects.filter(p => p.status === 'Completed').length
+    const planningCount = projects.filter(p => p.status === 'Planning').length
+    
+    // En çok hangi status varsa ona göre renk ver
+    if (completedCount >= inProgressCount && completedCount > 0) return 'success'
+    if (inProgressCount > 0) return 'primary'
+    if (planningCount > 0) return 'warning'
+    return 'info'
+  }, [role])
 
   // Calculate executor stats based on current employee
   const executorStats = useMemo(() => {
