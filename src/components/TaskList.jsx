@@ -1,13 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TaskCard from './TaskCard'
 import TaskModal from './TaskModal'
 import { useEmployee } from '../context/EmployeeContext'
-import { tasks as initialTasks } from '../data/tasks'
+import api from '../api'
 
 function TaskList({ role, project = null }) {
   const { currentEmployee } = useEmployee()
-  // Mock data - will be replaced with API calls
-  const [tasks, setTasks] = useState(initialTasks)
+  const [tasks, setTasks] = useState([])
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await api.listTasks(project)
+        if (!mounted) return
+        setTasks(res || [])
+      } catch (err) {
+        console.error('Failed to load tasks', err)
+      }
+    })()
+    return () => { mounted = false }
+  }, [project])
 
   // Modal state
   const [showModal, setShowModal] = useState(false)
@@ -35,24 +48,30 @@ function TaskList({ role, project = null }) {
     setShowModal(true)
   }
 
-  const handleSaveTask = (taskData) => {
-    if (editingTask) {
-      // Update existing task
-      setTasks(prev => prev.map(t => t.id === taskData.id ? taskData : t))
-      console.log('Task updated:', taskData)
-    } else {
-      // Add new task
-      setTasks(prev => [...prev, taskData])
-      console.log('Task created:', taskData)
+  const handleSaveTask = async (taskData) => {
+    try {
+      if (editingTask) {
+        const updated = await api.updateTask(taskData.id, taskData)
+        setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+      } else {
+        const created = await api.createTask(taskData)
+        setTasks(prev => [...prev, created])
+      }
+      setShowModal(false)
+    } catch (err) {
+      console.error('Failed to save task', err)
+      alert('Failed to save task')
     }
-    // TODO: API call here
   }
 
-  const handleDeleteTask = (taskId) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) return
+    try {
+      await api.deleteTask(taskId)
       setTasks(prev => prev.filter(t => t.id !== taskId))
-      console.log('Task deleted:', taskId)
-      // TODO: API call here
+    } catch (err) {
+      console.error('Failed to delete task', err)
+      alert('Failed to delete task')
     }
   }
 

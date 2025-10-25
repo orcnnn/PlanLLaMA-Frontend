@@ -1,33 +1,49 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import StatsCard from '../components/StatsCard'
 import ProjectList from '../components/ProjectList'
 import TaskList from '../components/TaskList'
 import { useEmployee } from '../context/EmployeeContext'
-import { tasks } from '../data/tasks'
-import { projects } from '../data/projects'
+import api from '../api'
 
 function Dashboard({ role = 'pm' }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('projects')
   const { currentEmployee } = useEmployee()
 
-  // Calculate overall project progress for PM stats
+  const [projects, setProjects] = useState([])
+  const [tasks, setTasks] = useState([])
+
+  // Load data
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const [projRes, taskRes] = await Promise.all([api.listProjects(), api.listTasks()])
+        if (!mounted) return
+        setProjects(projRes || [])
+        setTasks(taskRes || [])
+      } catch (err) {
+        console.error('Failed to load dashboard data', err)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  // Calculate overall project progress for PM stats (based on task completion)
   const overallProjectProgress = useMemo(() => {
     if (role !== 'pm') return 0
-    
-    const totalTasks = projects.reduce((sum, p) => sum + p.tasksCount, 0)
-    const completedTasks = projects.reduce((sum, p) => sum + p.completedTasks, 0)
-    
-    return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
-  }, [role])
+    const total = tasks.length
+    const completed = tasks.filter(t => t.status === 'Completed').length
+    return total > 0 ? Math.round((completed / total) * 100) : 0
+  }, [role, tasks])
 
   // Get color based on project statuses
   const getProjectStatsColor = useMemo(() => {
-    const inProgressCount = projects.filter(p => p.status === 'In Progress').length
-    const completedCount = projects.filter(p => p.status === 'Completed').length
-    const planningCount = projects.filter(p => p.status === 'Planning').length
+  const inProgressCount = tasks.filter(t => t.status === 'In Progress').length
+  const completedCount = tasks.filter(t => t.status === 'Completed').length
+  const planningCount = tasks.filter(t => t.status === 'Planning').length
     
     // En çok hangi status varsa ona göre renk ver
     if (completedCount >= inProgressCount && completedCount > 0) return 'success'
@@ -39,20 +55,18 @@ function Dashboard({ role = 'pm' }) {
   // Calculate executor stats based on current employee
   const executorStats = useMemo(() => {
     if (!currentEmployee || role !== 'executor') return null
-    
     const myTasks = tasks.filter(task => task.assignee === currentEmployee.name)
     const assignedTasks = myTasks.length
     const inProgress = myTasks.filter(task => task.status === 'In Progress').length
     const completed = myTasks.filter(task => task.status === 'Completed').length
     const pending = myTasks.filter(task => task.status === 'Pending').length
-    
     return {
       assignedTasks: { title: 'Assigned Tasks', value: assignedTasks, color: 'primary' },
       inProgress: { title: 'In Progress', value: inProgress, color: 'warning' },
       completed: { title: 'Completed', value: completed, color: 'success' },
       pending: { title: 'Pending', value: pending, color: 'info' }
     }
-  }, [currentEmployee, role])
+  }, [currentEmployee, role, tasks])
 
   // Role-based configuration
   const config = {

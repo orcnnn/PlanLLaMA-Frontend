@@ -155,4 +155,3 @@ export const getEmployeesByRole = (role) => {
 export const getEmployeeByEmployeeId = (employeeId) => {
   return employees.find(emp => emp.employee_id === employeeId)
 }
-

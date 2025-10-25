@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { employees } from '../data/employees'
+import { useEffect, useState } from 'react'
+import api from '../api'
 import { useEmployee } from '../context/EmployeeContext'
 import logo from '../assets/logo.ico'
 
@@ -7,14 +8,33 @@ function EmployeeSelection() {
   const navigate = useNavigate()
   const { selectEmployee } = useEmployee()
 
-  const handleSelectEmployee = (employee) => {
-    selectEmployee(employee)
+  const [employees, setEmployees] = useState([])
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await api.listEmployees()
+        if (!mounted) return
+        setEmployees(res || [])
+      } catch (err) {
+        console.error('Failed to load employees', err)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  const handleSelectEmployee = async (employee) => {
+    await selectEmployee(employee)
     navigate(`/${employee.user_role}`)
   }
 
   // Group employees by role
-  const projectManagers = employees.filter(emp => emp.user_role === 'pm')
-  const executors = employees.filter(emp => emp.user_role === 'executor')
+  // Backend şimdilik role bazlı filtreleme yapmı
+  // const projectManagers = employees.filter(emp => emp.user_role === 'pm')
+  // const executors = employees.filter(emp => emp.user_role === 'executor')
+  const executors = employees
+  const projectManagers = employees
 
   const EmployeeCard = ({ employee }) => {
     const availableHours = employee.capacity_hours_per_week - employee.current_load_hours

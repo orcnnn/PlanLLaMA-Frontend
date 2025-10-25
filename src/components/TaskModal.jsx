@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import MarkdownEditor from './MarkdownEditor'
-import { projects } from '../data/projects'
+import api from '../api'
 import { useEmployee } from '../context/EmployeeContext'
 
 function TaskModal({ show, onClose, onSave, task = null, projectName = null, role = 'pm' }) {
@@ -51,19 +51,40 @@ function TaskModal({ show, onClose, onSave, task = null, projectName = null, rol
         }))
     }
 
-    const handleSubmit = (e) => {
+    const [projects, setProjects] = useState([])
+
+    useEffect(() => {
+        let mounted = true
+        ;(async () => {
+            try {
+                const res = await api.listProjects()
+                if (!mounted) return
+                setProjects(res || [])
+            } catch (err) {
+                console.error('Failed to load projects', err)
+            }
+        })()
+        return () => { mounted = false }
+    }, [])
+
+    const handleSubmit = async (e) => {
         e.preventDefault()
 
         const taskData = {
-            id: task?.id || Date.now(),
+            id: task?.id,
             ...formData,
             estimatedHours: parseFloat(formData.estimatedHours) || 0,
             createdAt: task?.createdAt || new Date().toISOString(),
             completedAt: task?.completedAt || null
         }
 
-        onSave(taskData)
-        onClose()
+        try {
+            await onSave(taskData)
+            onClose()
+        } catch (err) {
+            console.error('Failed to submit task', err)
+            alert('Failed to submit task')
+        }
     }
 
     if (!show) return null
@@ -175,10 +196,10 @@ function TaskModal({ show, onClose, onSave, task = null, projectName = null, rol
                                                 >
                                                     <option value="">Select a project</option>
                                                     {projects.map(project => (
-                                                        <option key={project.id} value={project.name}>
-                                                            {project.name}
-                                                        </option>
-                                                    ))}
+                                                            <option key={project.id} value={project.name}>
+                                                                {project.name}
+                                                            </option>
+                                                        ))}
                                                 </select>
                                             </div>
                                             <div className="col-md-6">

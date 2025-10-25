@@ -1,41 +1,48 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import TaskList from "../components/TaskList"
 import ProjectModal from '../components/ProjectModal'
-import { projects as initialProjects } from '../data/projects'
-import { tasks } from '../data/tasks'
-import { employees } from '../data/employees'
+import api from '../api'
 
 function ProjectPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
   
   // Project state
-  const [projects, setProjects] = useState(initialProjects)
+  const [project, setProject] = useState(null)
   const [showModal, setShowModal] = useState(false)
 
   // Seçili projeyi bul
-  const project = projects.find(p => p.id === parseInt(projectId))
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const proj = await api.getProject(projectId)
+        const tasksRes = await api.listTasks(projectId)
+        const employeesRes = await api.listEmployees()
+        if (!mounted) return
+        setProject(proj)
+        setProjectTasks(tasksRes || [])
+        const uniqueAssignees = [...new Set((tasksRes || []).map(t => t.assignee))]
+        setProjectMembers(uniqueAssignees.map(name => (employeesRes || []).find(e => e.name === name)).filter(Boolean))
+      } catch (err) {
+        console.error('Failed to load project page data', err)
+      }
+    })()
+    return () => { mounted = false }
+  }, [projectId])
   
   // Proje için task ve member bilgilerini hesapla
-  const projectTasks = useMemo(() => {
-    if (!project) return []
-    return tasks.filter(task => task.project === project.name)
-  }, [project])
-
-  const projectMembers = useMemo(() => {
-    if (!project) return []
-    const uniqueAssignees = [...new Set(projectTasks.map(task => task.assignee))]
-    return uniqueAssignees.map(assigneeName => 
-      employees.find(emp => emp.name === assigneeName)
-    ).filter(Boolean)
-  }, [project, projectTasks])
+  const [projectTasks, setProjectTasks] = useState([])
+  const [projectMembers, setProjectMembers] = useState([])
 
   // Progress hesapla
   const progress = useMemo(() => {
-    if (!project || project.tasksCount === 0) return 0
-    return Math.round((project.completedTasks / project.tasksCount) * 100)
-  }, [project])
+    if (!project) return 0
+    const total = project.tasksCount || projectTasks.length
+    const completed = project.completedTasks || projectTasks.filter(t => t.status === 'Completed').length
+    return total > 0 ? Math.round((completed / total) * 100) : 0
+  }, [project, projectTasks])
 
   // Progress'e göre renk belirle
   const getProgressBarClass = () => {
@@ -51,10 +58,15 @@ function ProjectPage() {
     setShowModal(true)
   }
 
-  const handleSaveProject = (updatedProject) => {
-    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p))
-    console.log('Project updated:', updatedProject)
-    // TODO: API call here
+  const handleSaveProject = async (updatedProject) => {
+    try {
+      const saved = await api.updateProject(updatedProject.id, updatedProject)
+      setProject(saved)
+      setShowModal(false)
+    } catch (err) {
+      console.error('Failed to save project', err)
+      alert('Failed to save project')
+    }
   }
 
   // Proje bulunamazsa

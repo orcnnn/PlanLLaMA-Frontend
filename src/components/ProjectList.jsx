@@ -1,10 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ProjectCard from './ProjectCard'
 import ProjectModal from './ProjectModal'
-import { employees } from '../data/employees'
-import { tasks } from '../data/tasks'
-import { projects as initialProjects } from '../data/projects'
+import api from '../api'
 
 function ProjectList({ role }) {
   const navigate = useNavigate()
@@ -13,8 +11,29 @@ function ProjectList({ role }) {
   const [showModal, setShowModal] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
 
-  // Mock data - will be replaced with API calls
-  const [projects, setProjects] = useState(initialProjects)
+  const [projects, setProjects] = useState([])
+  const [tasks, setTasks] = useState([])
+  const [employees, setEmployees] = useState([])
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const [projRes, tasksRes, empRes] = await Promise.all([
+          api.listProjects(),
+          api.listTasks(),
+          api.listEmployees(),
+        ])
+        if (!mounted) return
+        setProjects(projRes || [])
+        setTasks(tasksRes || [])
+        setEmployees(empRes || [])
+      } catch (err) {
+        console.error('Failed to load projects/tasks/employees', err)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
 
   const handleNewProject = () => {
     navigate('/pm/new-project')
@@ -25,16 +44,26 @@ function ProjectList({ role }) {
     setShowModal(true)
   }
 
-  const handleSaveProject = (project) => {
-    if (editingProject) {
-      // Update existing project
-      setProjects(prev => prev.map(p => p.id === project.id ? project : p))
+  const handleSaveProject = async (project) => {
+    if (!editingProject) return
+    try {
+      const updated = await api.updateProject(project.id, project)
+      setProjects(prev => prev.map(p => p.id === updated.id ? updated : p))
+      setShowModal(false)
+    } catch (err) {
+      console.error('Failed to save project', err)
+      alert('Failed to save project')
     }
   }
 
-  const handleDeleteProject = (projectId) => {
-    if (window.confirm('Are you sure you want to delete this project?')) {
+  const handleDeleteProject = async (projectId) => {
+    if (!window.confirm('Are you sure you want to delete this project?')) return
+    try {
+      await api.deleteProject(projectId)
       setProjects(prev => prev.filter(p => p.id !== projectId))
+    } catch (err) {
+      console.error('Failed to delete project', err)
+      alert('Failed to delete project')
     }
   }
 
@@ -46,14 +75,9 @@ function ProjectList({ role }) {
 
   // Her proje için çalışanları hesapla
   const getProjectMembers = (projectName) => {
-    // Bu projedeki taskların assignee'lerini bul
     const projectTasks = tasks.filter(task => task.project === projectName)
     const uniqueAssignees = [...new Set(projectTasks.map(task => task.assignee))]
-    
-    // Assignee isimlerine göre employee bilgilerini bul
-    return uniqueAssignees.map(assigneeName => 
-      employees.find(emp => emp.name === assigneeName)
-    ).filter(Boolean) // undefined olanları filtrele
+    return uniqueAssignees.map(name => employees.find(e => e.name === name)).filter(Boolean)
   }
 
   return (

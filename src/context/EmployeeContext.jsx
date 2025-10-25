@@ -1,29 +1,45 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { getEmployeeById } from '../data/employees'
+import api from '../api'
 
 const EmployeeContext = createContext()
 
 export function EmployeeProvider({ children }) {
   const [currentEmployee, setCurrentEmployee] = useState(null)
 
-  // Load employee from localStorage on mount
+  // Load employee from localStorage on mount and fetch full data from backend
   useEffect(() => {
     const savedEmployeeId = localStorage.getItem('currentEmployeeId')
     if (savedEmployeeId) {
-      const employee = getEmployeeById(parseInt(savedEmployeeId))
-      if (employee) {
-        setCurrentEmployee(employee)
-      }
+      // saved value might be employee_id string (eXX) or numeric id
+      (async () => {
+        try {
+          const emp = await api.getEmployee(savedEmployeeId)
+          setCurrentEmployee(emp)
+        } catch (err) {
+          // fall back to clearing storage if fetch fails
+          console.warn('Failed to load employee from API', err)
+          localStorage.removeItem('currentEmployeeId')
+        }
+      })()
     }
   }, [])
 
   // Save employee to localStorage when it changes
-  const selectEmployee = (employee) => {
-    setCurrentEmployee(employee)
-    if (employee) {
-      localStorage.setItem('currentEmployeeId', employee.id.toString())
-    } else {
+  const selectEmployee = async (employee) => {
+    // Accept either employee object or employee_id string
+    if (!employee) {
+      setCurrentEmployee(null)
       localStorage.removeItem('currentEmployeeId')
+      return
+    }
+
+    const empId = employee.employee_id || employee.id || employee
+    try {
+      const emp = await api.getEmployee(empId)
+      setCurrentEmployee(emp)
+      localStorage.setItem('currentEmployeeId', empId.toString())
+    } catch (err) {
+      console.warn('Failed to select employee from API', err)
     }
   }
 
