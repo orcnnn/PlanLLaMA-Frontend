@@ -1,7 +1,7 @@
 // Mock project data
 export const projects = [
   {
-    id: 1,
+    project_id: 'p01',
     name: 'Website Redesign',
     description: 'Complete redesign of company website',
     status: 'In Progress',
@@ -13,7 +13,7 @@ export const projects = [
     priority: 'high'
   },
   {
-    id: 2,
+    project_id: 'p02',
     name: 'Mobile App Development',
     description: 'Build iOS and Android mobile application',
     status: 'In Progress',
@@ -25,7 +25,7 @@ export const projects = [
     priority: 'critical'
   },
   {
-    id: 3,
+    project_id: 'p03',
     name: 'API Integration',
     description: 'Integrate third-party APIs',
     status: 'In Progress',
@@ -37,7 +37,7 @@ export const projects = [
     priority: 'medium'
   },
   {
-    id: 4,
+    project_id: 'p04',
     name: 'E-commerce Platform',
     description: 'Build complete e-commerce solution with payment integration',
     status: 'In Progress',
@@ -49,7 +49,7 @@ export const projects = [
     priority: 'critical'
   },
   {
-    id: 5,
+    project_id: 'p05',
     name: 'DevOps',
     description: 'Setup CI/CD pipeline and infrastructure automation',
     status: 'In Progress',
@@ -62,15 +62,24 @@ export const projects = [
   }
 ]
 
-export const getProjectById = (id) => {
-  return projects.find(project => project.id === parseInt(id))
+// Primary lookup by project_id (API compatible)
+export const getProjectByProjectId = (projectId) => {
+  return projects.find(project => project.project_id === projectId)
 }
 
+// Get project by name
 export const getProjectByName = (name) => {
   return projects.find(project => project.name === name)
 }
 
+// Get projects by status
 export const getProjectsByStatus = (status) => {
   return projects.filter(project => project.status === status)
+}
+
+// Deprecated - use getProjectByProjectId instead
+export const getProjectById = (id) => {
+  console.warn('getProjectById is deprecated, use getProjectByProjectId instead')
+  return projects.find(project => project.project_id === `p0${id}`)
 }
 

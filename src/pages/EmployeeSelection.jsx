@@ -91,7 +91,7 @@ function EmployeeSelection() {
             </h4>
             <div className="row g-3">
               {projectManagers.map(employee => (
-                <div key={employee.id} className="col-md-6">
+                <div key={employee.employee_id} className="col-md-6">
                   <EmployeeCard employee={employee} />
                 </div>
               ))}
@@ -106,7 +106,7 @@ function EmployeeSelection() {
             </h4>
             <div className="row g-3">
               {executors.map(employee => (
-                <div key={employee.id} className="col-md-6">
+                <div key={employee.employee_id} className="col-md-6">
                   <EmployeeCard employee={employee} />
                 </div>
               ))}

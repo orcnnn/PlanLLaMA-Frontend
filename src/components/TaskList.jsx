@@ -2,12 +2,12 @@ import { useState } from 'react'
 import TaskCard from './TaskCard'
 import TaskModal from './TaskModal'
 import { useEmployee } from '../context/EmployeeContext'
-import { tasks as initialTasks } from '../data/tasks'
+import { getEnrichedTasks, enrichTasksForDisplay } from '../data/tasks'
 
 function TaskList({ role, project = null }) {
   const { currentEmployee } = useEmployee()
   // Mock data - will be replaced with API calls
-  const [tasks, setTasks] = useState(initialTasks)
+  const [tasks, setTasks] = useState(getEnrichedTasks())
 
   // Modal state
   const [showModal, setShowModal] = useState(false)
@@ -38,11 +38,17 @@ function TaskList({ role, project = null }) {
   const handleSaveTask = (taskData) => {
     if (editingTask) {
       // Update existing task
-      setTasks(prev => prev.map(t => t.id === taskData.id ? taskData : t))
+      setTasks(prev => {
+        const updated = prev.map(t => t.task_id === taskData.task_id ? taskData : t)
+        return enrichTasksForDisplay(updated)
+      })
       console.log('Task updated:', taskData)
     } else {
       // Add new task
-      setTasks(prev => [...prev, taskData])
+      setTasks(prev => {
+        const newTasks = [...prev, taskData]
+        return enrichTasksForDisplay(newTasks)
+      })
       console.log('Task created:', taskData)
     }
     // TODO: API call here
@@ -50,7 +56,7 @@ function TaskList({ role, project = null }) {
 
   const handleDeleteTask = (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
-      setTasks(prev => prev.filter(t => t.id !== taskId))
+      setTasks(prev => prev.filter(t => t.task_id !== taskId))
       console.log('Task deleted:', taskId)
       // TODO: API call here
     }
@@ -132,7 +138,7 @@ function TaskList({ role, project = null }) {
         {project ? (
             <div className="row">
               {filteredTasks.map(task => (
-                  <div key={task.id} className="col-md-6 col-lg-4 mb-3">
+                  <div key={task.task_id} className="col-md-6 col-lg-4 mb-3">
                     <TaskCard
                         task={task}
                         role={role}
@@ -160,7 +166,7 @@ function TaskList({ role, project = null }) {
                   {expandedProjects[projectName] && (
                       <div className="row">
                         {groupedTasks[projectName].map(task => (
-                            <div key={task.id} className="col-md-6 col-lg-4 mb-3">
+                            <div key={task.task_id} className="col-md-6 col-lg-4 mb-3">
                               <TaskCard
                                   task={task}
                                   role={role}

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { getEmployeeById } from '../data/employees'
+import { getEmployeeByEmployeeId } from '../data/employees'
 
 const EmployeeContext = createContext()
 
@@ -10,7 +10,7 @@ export function EmployeeProvider({ children }) {
   useEffect(() => {
     const savedEmployeeId = localStorage.getItem('currentEmployeeId')
     if (savedEmployeeId) {
-      const employee = getEmployeeById(parseInt(savedEmployeeId))
+      const employee = getEmployeeByEmployeeId(savedEmployeeId)
       if (employee) {
         setCurrentEmployee(employee)
       }
@@ -21,7 +21,7 @@ export function EmployeeProvider({ children }) {
   const selectEmployee = (employee) => {
     setCurrentEmployee(employee)
     if (employee) {
-      localStorage.setItem('currentEmployeeId', employee.id.toString())
+      localStorage.setItem('currentEmployeeId', employee.employee_id)
     } else {
       localStorage.removeItem('currentEmployeeId')
     }

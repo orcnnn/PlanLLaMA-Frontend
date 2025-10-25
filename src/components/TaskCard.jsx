@@ -40,7 +40,7 @@ function TaskCard({ task, role, onEdit, onDelete, onUpdateStatus }) {
 
   const handleDelete = () => {
     if (onDelete) {
-      onDelete(task.id)
+      onDelete(task.task_id)
     }
   }
 

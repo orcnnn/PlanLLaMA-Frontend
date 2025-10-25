@@ -5,13 +5,17 @@ import StatsCard from '../components/StatsCard'
 import ProjectList from '../components/ProjectList'
 import TaskList from '../components/TaskList'
 import { useEmployee } from '../context/EmployeeContext'
-import { tasks } from '../data/tasks'
+import { getEnrichedTasks } from '../data/tasks'
 import { projects } from '../data/projects'
 
 function Dashboard({ role = 'pm' }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('projects')
   const { currentEmployee } = useEmployee()
+  
+  // Get enriched tasks with names
+  const enrichedTasks = useMemo(() => getEnrichedTasks(), [])
+  const tasks = enrichedTasks
 
   // Calculate overall project progress for PM stats
   const overallProjectProgress = useMemo(() => {
@@ -52,7 +56,7 @@ function Dashboard({ role = 'pm' }) {
       completed: { title: 'Completed', value: completed, color: 'success' },
       pending: { title: 'Pending', value: pending, color: 'info' }
     }
-  }, [currentEmployee, role])
+  }, [currentEmployee, role, tasks])
 
   // Role-based configuration
   const config = {

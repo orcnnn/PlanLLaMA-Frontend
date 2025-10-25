@@ -38,10 +38,13 @@ function ProjectModal({ show, onClose, onSave, project = null }) {
     e.preventDefault()
     
     const newProject = {
-      id: project ? project.id : Date.now(),
+      project_id: project ? project.project_id : `p${Date.now()}`,
       ...formData,
       tasksCount: project ? project.tasksCount : 0,
-      completedTasks: project ? project.completedTasks : 0
+      completedTasks: project ? project.completedTasks : 0,
+      budget: project ? project.budget : 0,
+      priority: project ? project.priority : 'medium',
+      createdAt: project ? project.createdAt : new Date().toISOString().split('T')[0]
     }
     
     onSave(newProject)

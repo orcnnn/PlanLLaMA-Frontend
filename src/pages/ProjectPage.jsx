@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import TaskList from "../components/TaskList"
 import ProjectModal from '../components/ProjectModal'
-import { projects as initialProjects } from '../data/projects'
-import { tasks } from '../data/tasks'
+import { projects as initialProjects, getProjectById } from '../data/projects'
+import { getEnrichedTasks } from '../data/tasks'
 import { employees } from '../data/employees'
 
 function ProjectPage() {
@@ -13,9 +13,15 @@ function ProjectPage() {
   // Project state
   const [projects, setProjects] = useState(initialProjects)
   const [showModal, setShowModal] = useState(false)
+  
+  // Get enriched tasks with names
+  const tasks = useMemo(() => getEnrichedTasks(), [])
 
-  // Seçili projeyi bul
-  const project = projects.find(p => p.id === parseInt(projectId))
+  // Seçili projeyi bul (backward compatibility için hem id hem project_id destekle)
+  const project = projects.find(p => 
+    p.project_id === `p${String(projectId).padStart(2, '0')}` || 
+    p.project_id === projectId
+  ) || getProjectById(projectId)
   
   // Proje için task ve member bilgilerini hesapla
   const projectTasks = useMemo(() => {
@@ -52,7 +58,7 @@ function ProjectPage() {
   }
 
   const handleSaveProject = (updatedProject) => {
-    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p))
+    setProjects(prev => prev.map(p => p.project_id === updatedProject.project_id ? updatedProject : p))
     console.log('Project updated:', updatedProject)
     // TODO: API call here
   }
@@ -108,6 +114,7 @@ function ProjectPage() {
                     <span>Progress</span>
                     <span className="fw-bold">{progress}%</span>
                   </div>
+
                   <div className="progress" style={{ height: '12px' }}>
                     <div
                         className={`progress-bar ${getProgressBarClass()}`}
@@ -142,10 +149,6 @@ function ProjectPage() {
             {/* Task listesi buraya eklenebilir */}
             <div className="card shadow-sm">
               <div className="card-body">
-                <h5 className="card-title mb-3">Tasks</h5>
-                <p className="text-muted">
-                  {project.completedTasks} / {project.tasksCount} tasks completed
-                </p>
                 <TaskList role="pm" project={project.name} />
               </div>
             </div>
@@ -158,7 +161,7 @@ function ProjectPage() {
                 {projectMembers.length > 0 ? (
                   <div className="d-flex flex-column gap-2">
                     {projectMembers.map((member) => (
-                        <div key={member.id} className="d-flex align-items-center">
+                        <div key={member.employee_id} className="d-flex align-items-center">
                           <div 
                             className="text-white rounded-circle d-flex align-items-center justify-content-center me-2"
                             style={{ 

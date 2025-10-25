@@ -43,7 +43,7 @@ function ProjectCard({ project, role, members = [], onEdit, onDelete, onClick })
 
   const handleDelete = (e) => {
     e.stopPropagation()
-    onDelete(project.id)
+    onDelete(project.project_id)
   }
 
   return (
@@ -88,7 +88,7 @@ function ProjectCard({ project, role, members = [], onEdit, onDelete, onClick })
               <div className="d-flex" style={{ marginLeft: '-5px' }}>
                 {members.slice(0, 4).map((member, index) => (
                   <div
-                    key={member.id}
+                    key={member.employee_id}
                     className="position-relative"
                     style={{ marginLeft: index > 0 ? '-8px' : '0' }}
                     title={`${member.name} - ${member.role}`}

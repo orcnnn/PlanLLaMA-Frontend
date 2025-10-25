@@ -1,7 +1,6 @@
 // Mock employee data
 export const employees = [
   {
-    id: 1,
     employee_id: 'e01',
     name: 'Sarah Johnson',
     role: 'Project Manager',
@@ -24,7 +23,6 @@ export const employees = [
     timezone: 'America/New_York'
   },
   {
-    id: 2,
     employee_id: 'e02',
     name: 'David Wilson',
     role: 'Senior Project Manager',
@@ -47,7 +45,6 @@ export const employees = [
     timezone: 'America/Los_Angeles'
   },
   {
-    id: 3,
     employee_id: 'e03',
     name: 'Michael Chen',
     role: 'Backend Engineer',
@@ -71,7 +68,6 @@ export const employees = [
     timezone: 'Asia/Shanghai'
   },
   {
-    id: 4,
     employee_id: 'e04',
     name: 'Emily Davis',
     role: 'UI/UX Designer',
@@ -95,7 +91,6 @@ export const employees = [
     timezone: 'Europe/Berlin'
   },
   {
-    id: 5,
     employee_id: 'e05',
     name: 'Alex Kumar',
     role: 'Frontend Developer',
@@ -119,7 +114,6 @@ export const employees = [
     timezone: 'Asia/Kolkata'
   },
   {
-    id: 6,
     employee_id: 'e06',
     name: 'Yavuz Kaya',
     role: 'Backend Engineer',
@@ -144,15 +138,24 @@ export const employees = [
   }
 ]
 
-export const getEmployeeById = (id) => {
-  return employees.find(emp => emp.id === id)
+// Primary lookup by employee_id (API compatible)
+export const getEmployeeByEmployeeId = (employeeId) => {
+  return employees.find(emp => emp.employee_id === employeeId)
 }
 
+// Get employees by role
 export const getEmployeesByRole = (role) => {
   return employees.filter(emp => emp.user_role === role)
 }
 
-export const getEmployeeByEmployeeId = (employeeId) => {
-  return employees.find(emp => emp.employee_id === employeeId)
+// Get employee by name (for backward compatibility)
+export const getEmployeeByName = (name) => {
+  return employees.find(emp => emp.name === name)
+}
+
+// Deprecated - use getEmployeeByEmployeeId instead
+export const getEmployeeById = (id) => {
+  console.warn('getEmployeeById is deprecated, use getEmployeeByEmployeeId instead')
+  return employees[id - 1] // Fallback for old code
 }
 

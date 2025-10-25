@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
 import MarkdownEditor from './MarkdownEditor'
 import { projects } from '../data/projects'
+import { employees, getEmployeesByRole } from '../data/employees'
 import { useEmployee } from '../context/EmployeeContext'
 
 function TaskModal({ show, onClose, onSave, task = null, projectName = null, role = 'pm' }) {
     const { currentEmployee } = useEmployee()
     const isExecutor = role === 'executor'
+    
+    // Get executor list for assignee dropdown
+    const executors = getEmployeesByRole('executor')
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -54,11 +58,17 @@ function TaskModal({ show, onClose, onSave, task = null, projectName = null, rol
     const handleSubmit = (e) => {
         e.preventDefault()
 
+        // Get employee and project IDs from names
+        const selectedEmployee = executors.find(emp => emp.name === formData.assignee)
+        const selectedProject = projects.find(proj => proj.name === formData.project)
+
         const taskData = {
-            id: task?.id || Date.now(),
+            task_id: task?.task_id || `t${Date.now()}`,
             ...formData,
+            assignee_id: selectedEmployee?.employee_id || formData.assignee_id,
+            project_id: selectedProject?.project_id || formData.project_id,
             estimatedHours: parseFloat(formData.estimatedHours) || 0,
-            createdAt: task?.createdAt || new Date().toISOString(),
+            createdAt: task?.createdAt || new Date().toISOString().split('T')[0],
             completedAt: task?.completedAt || null
         }
 
@@ -175,7 +185,7 @@ function TaskModal({ show, onClose, onSave, task = null, projectName = null, rol
                                                 >
                                                     <option value="">Select a project</option>
                                                     {projects.map(project => (
-                                                        <option key={project.id} value={project.name}>
+                                                        <option key={project.project_id} value={project.name}>
                                                             {project.name}
                                                         </option>
                                                     ))}
@@ -234,15 +244,20 @@ function TaskModal({ show, onClose, onSave, task = null, projectName = null, rol
                                         <div className="row mb-3">
                                             <div className="col-md-6">
                                                 <label htmlFor="assignee" className="form-label">Assignee</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
+                                                <select
+                                                    className="form-select"
                                                     id="assignee"
                                                     name="assignee"
                                                     value={formData.assignee}
                                                     onChange={handleChange}
-                                                    placeholder="e.g., John Doe"
-                                                />
+                                                >
+                                                    <option value="">Select an assignee</option>
+                                                    {executors.map(executor => (
+                                                        <option key={executor.employee_id} value={executor.name}>
+                                                            {executor.name} - {executor.role}
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <div className="col-md-6">
                                                 <label htmlFor="dueDate" className="form-label">Due Date *</label>
